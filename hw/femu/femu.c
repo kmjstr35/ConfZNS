@@ -734,11 +734,39 @@ static Property femu_props[] = {
     DEFINE_PROP_UINT16("lsec_size", FemuCtrl, oc_params.sec_size, 4096),
     DEFINE_PROP_UINT8("lsecs_per_pg", FemuCtrl, oc_params.secs_per_pg, 4),
     DEFINE_PROP_UINT16("lpgs_per_blk", FemuCtrl, oc_params.pgs_per_blk, 512),
-    DEFINE_PROP_UINT8("lmax_sec_per_rq", FemuCtrl, oc_params.max_sec_per_rq, 64),
+    DEFINE_PROP_UINT8("lmax_sec_per_rq", FemuCtrl, oc_params.max_sec_per_rq,
+                      64),
     DEFINE_PROP_UINT8("lnum_ch", FemuCtrl, oc_params.num_ch, 2),
     DEFINE_PROP_UINT8("lnum_lun", FemuCtrl, oc_params.num_lun, 8),
     DEFINE_PROP_UINT8("lnum_pln", FemuCtrl, oc_params.num_pln, 2),
     DEFINE_PROP_UINT16("lmetasize", FemuCtrl, oc_params.sos, 16),
+
+    DEFINE_PROP_UINT16("zns_register_model", FemuCtrl,
+                       zns_params.register_model, 1),
+    DEFINE_PROP_UINT64("zns_nchnls", FemuCtrl, zns_params.nchnls, 16),
+    DEFINE_PROP_UINT64("zns_ways", FemuCtrl, zns_params.ways, 65000),
+    DEFINE_PROP_UINT64("zns_zones", FemuCtrl, zns_params.zones, 450000),
+    DEFINE_PROP_UINT64("zns_chnls_per_zone", FemuCtrl,
+                       zns_params.chnls_per_zone, 8),
+    DEFINE_PROP_UINT64("zns_ways_per_zone", FemuCtrl, zns_params.ways_per_zone,
+                       1),
+    DEFINE_PROP_UINT64("zns_dies_per_chip", FemuCtrl, zns_params.dies_per_chip,
+                       1),
+    DEFINE_PROP_UINT64("zns_planes_per_die", FemuCtrl,
+                       zns_params.planes_per_die, 1),
+
+    DEFINE_PROP_BOOL("zns_is_another_namespace", FemuCtrl,
+                      zns_params.is_another_namespace, 0),
+    DEFINE_PROP_UINT64("zns_chnls_per_another_zone", FemuCtrl,
+                       zns_params.chnls_per_another_zone, 7),
+    
+    DEFINE_PROP_UINT64("zns_pg_rd_lat", FemuCtrl, zns_params.pg_rd_lat, 65000),
+    DEFINE_PROP_UINT64("zns_pg_wr_lat", FemuCtrl, zns_params.pg_wr_lat, 450000),
+    DEFINE_PROP_UINT64("zns_blk_er_lat", FemuCtrl, zns_params.blk_er_lat, 2000000),
+    DEFINE_PROP_UINT64("zns_zone_reset_lat", FemuCtrl, zns_params.zone_reset_lat, 2000000),
+    DEFINE_PROP_UINT64("zns_ch_xfer_lat", FemuCtrl, zns_params.ch_xfer_lat, 25000),
+
+
     DEFINE_PROP_END_OF_LIST(),
 };
 

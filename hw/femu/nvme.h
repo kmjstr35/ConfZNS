@@ -37,7 +37,6 @@
  */
 #define ADVANCE_PER_CH_ENDTIME 1
 #define SK_HYNIX_VALIDATION 0
-#define MK_ZONE_CONVENTIONAL 5
 #define NVME_PRIORITY_SCHED_MODE 1      //future feature for ConfZNS
 
 #define PCIe_TIME_SIMULATION 1
@@ -1215,6 +1214,28 @@ typedef struct OcCtrlParams {
     uint16_t sos;
 } OcCtrlParams;
 
+typedef struct zns_ssdparams{
+    uint16_t register_model;    /* =1 single register =2 double register */
+    uint64_t nchnls;            /* # of channels in the SSD */
+    uint64_t ways;              /* # of ways in the SSD */
+    uint64_t zones;             /* # of zones in ZNS SSD */
+    uint64_t chnls_per_zone;    /* ZNS Association degree. # of channels per zone, must be divisor of nchnls */
+    uint64_t ways_per_zone;     /* another ZNS Association degree. # of ways per zone, must be divisor of nways */
+    uint64_t dies_per_chip;
+    uint64_t planes_per_die;      
+    uint64_t csze_pages;        /* #of Pages in Chip (Inhoinno:I guess lun in femu)*/
+    uint64_t nchips;            /* # of chips in SSD*/
+    bool     is_another_namespace;
+    uint64_t chnls_per_another_zone;    
+    uint64_t pg_rd_lat;         /* NAND page read latency in nanoseconds */
+    uint64_t pg_wr_lat;         /* NAND page program latency in nanoseconds */
+    uint64_t blk_er_lat;        /* NAND block erase latency in nanoseconds */
+    uint64_t zone_reset_lat;    /* ZNS SSD ZONE reset latency in nanoseconds */
+    uint64_t
+        ch_xfer_lat; /* channel transfer latency for one page in nanoseconds*/
+    uint32_t num_conv_zone;
+}zns_ssdparams;
+
 struct FemuCtrl;
 typedef struct FemuExtCtrlOps {
     void     *state;
@@ -1236,7 +1257,8 @@ typedef struct FemuCtrl {
     bool            wrr_enable;
 
     /* Coperd: ZNS FIXME */
-    struct zns      *zns;   // for ZNS Latency emualting, Inhoinno
+    struct zns_ssdparams zns_params;
+    struct zns *zns; // for ZNS Latency emualting, Inhoinno
     QemuUUID        uuid;
     uint32_t        zasl_bs;
     uint8_t         zasl;
