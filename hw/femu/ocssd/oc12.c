@@ -43,7 +43,7 @@ static uint64_t ppa2secidx(Oc12Ctrl *ln, uint64_t ppa)
     r += pg * c->num_pg;
 
     if (r > ln->params.total_units) {
-        femu_err("Out-of-range PPA detected!"
+        error_report("Out-of-range PPA detected!"
                  "ch:%lu,lun:%lu,blk:%lu,pg:%lu,pl:%lu,sec:%lu\n", ch, lun, blk,
                  pg, pln, sec);
         return ~(0ULL);
@@ -225,7 +225,7 @@ static int oc12_meta_state_set_written(Oc12Ctrl *ln, uint64_t ppa)
 #if 0
     uint32_t cur_state = ((uint32_t *)tgt_sec_meta_buf)[0];
     if (cur_state == OC12_SEC_WRITTEN) {
-        femu_err("oc12_meta_state_set_written failed, already written!\n");
+        error_report("oc12_meta_state_set_written failed, already written!\n");
         return 1;
     }
 #endif
@@ -255,18 +255,18 @@ static uint16_t oc12_rw_check_req(FemuCtrl *n, NvmeNamespace *ns, NvmeCmd *cmd,
     assert(nr_pages == nlb);
 
     if (nlb > ln->params.max_sec_per_rq) {
-        femu_err("oc12_rw: npages too large (%u). Max:%u supported\n", nlb,
+        error_report("oc12_rw: npages too large (%u). Max:%u supported\n", nlb,
                  ln->params.max_sec_per_rq);
         return NVME_INVALID_FIELD | NVME_DNR;
     }
     if ((is_write) && (nlb < ln->params.sec_per_pl)) {
-        femu_err("oc12_rw: I/O does not respect device write constrains."
+        error_report("oc12_rw: I/O does not respect device write constrains."
                  "Sectors send: (%u). Min:%u sectors required\n", nlb,
                  ln->params.sec_per_pl);
         return NVME_INVALID_FIELD | NVME_DNR;
     }
     if (spba == OC12_PBA_UNMAPPED) {
-        femu_err("oc12_rw: unmapped PBA\n");
+        error_report("oc12_rw: unmapped PBA\n");
         return NVME_INVALID_FIELD | NVME_DNR;
     }
 
@@ -448,7 +448,7 @@ static uint16_t oc12_read(FemuCtrl *n, NvmeNamespace *ns, NvmeCmd *cmd,
     err = oc12_rw_check_req(n, ns, cmd, req, (uint64_t *)req->slba, nlb, nlb,
                             data_size, meta_size);
     if (err) {
-        femu_err("oc12_rw: failed nvme_rw_check (0x%x)\n", err);
+        error_report("oc12_rw: failed nvme_rw_check (0x%x)\n", err);
         goto fail_free;
     }
 
@@ -469,7 +469,7 @@ static uint16_t oc12_read(FemuCtrl *n, NvmeNamespace *ns, NvmeCmd *cmd,
 
     /* DMA user data */
     if (nvme_map_prp(&req->qsg, &req->iov, prp1, prp2, data_size, n)) {
-        femu_err("oc12_read: malformed prp (sz:%lu)\n", data_size);
+        error_report("oc12_read: malformed prp (sz:%lu)\n", data_size);
         err = NVME_INVALID_FIELD | NVME_DNR;
         goto fail_free;
     }
@@ -522,7 +522,7 @@ static uint16_t oc12_write(FemuCtrl *n, NvmeNamespace *ns, NvmeCmd *cmd,
     err = oc12_rw_check_req(n, ns, cmd, req, psl, nlb, nlb, data_size,
                             meta_size);
     if (err) {
-        femu_err("oc12_write: failed nvme_rw_check (0x%x)\n", err);
+        error_report("oc12_write: failed nvme_rw_check (0x%x)\n", err);
         goto fail_free;
     }
 
@@ -547,7 +547,7 @@ static uint16_t oc12_write(FemuCtrl *n, NvmeNamespace *ns, NvmeCmd *cmd,
 
     /* DMA user data */
     if (nvme_map_prp(&req->qsg, &req->iov, prp1, prp2, data_size, n)) {
-        femu_err("oc12_write: malformed prp (sz:%lu)\n", data_size);
+        error_report("oc12_write: malformed prp (sz:%lu)\n", data_size);
         err = NVME_INVALID_FIELD | NVME_DNR;
         goto fail_free;
     }
@@ -896,10 +896,10 @@ static int oc12_init_more(FemuCtrl *n)
     oc12_init_params(n);
 
     if (lps->mtype != 0)
-        femu_err("FEMU: Only NAND Flash Memory supported at the moment\n");
+        error_report("FEMU: Only NAND Flash Memory supported at the moment\n");
 
     if ((lps->num_pln > 4) || (lps->num_pln == 3))
-        femu_err("FEMU: Only 1/2/4-plane modes supported\n");
+        error_report("FEMU: Only 1/2/4-plane modes supported\n");
 
     oc12_init_misc(n);
 
@@ -951,7 +951,7 @@ static int oc12_init_more(FemuCtrl *n)
             c->mpos = cpu_to_le32(0x40404); /* quad plane */
             break;
         default:
-            femu_err("Unsupported NAND plane type (%d)\n", c->num_pln);
+            error_report("Unsupported NAND plane type (%d)\n", c->num_pln);
             return -EINVAL;
         }
 
@@ -1015,13 +1015,13 @@ static int oc12_init_more(FemuCtrl *n)
 
     ret = oc12_init_meta(ln);
     if (ret) {
-        femu_err("oc12_init_meta failed\n");
+        error_report("oc12_init_meta failed\n");
         return ret;
     }
 
     ret = (n->oc12_ctrl->read_l2p_tbl) ? oc12_read_tbls(n) : 0;
     if (ret) {
-        femu_err("read_l2p_tbl failed\n");
+        error_report("read_l2p_tbl failed\n");
         return ret;
     }
 

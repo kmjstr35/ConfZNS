@@ -10,7 +10,7 @@ int init_dram_backend(SsdDramBackend **mbe, int64_t nbytes)
     b->logical_space = g_malloc0(nbytes);
 
     if (mlock(b->logical_space, nbytes) == -1) {
-        femu_err("Failed to pin the memory backend to the host DRAM\n");
+        error_report("Failed to pin the memory backend to the host DRAM\n");
         g_free(b->logical_space);
         abort();
     }

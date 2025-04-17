@@ -7,12 +7,12 @@ static int nvme_add_kvm_msi_virq(FemuCtrl *n, NvmeCQueue *cq)
     KVMRouteChange c;
 
     if (!msix_enabled(&(n->parent_obj))) {
-        femu_err("MSIX is mandatory for the device");
+        error_report("MSIX is mandatory for the device");
         return -1;
     }
 
     if (event_notifier_init(&cq->guest_notifier, 0)) {
-        femu_err("Initiated guest notifier failed");
+        error_report("Initiated guest notifier failed");
         return -1;
     }
     event_notifier_set_handler(&cq->guest_notifier, NULL);
@@ -22,7 +22,7 @@ static int nvme_add_kvm_msi_virq(FemuCtrl *n, NvmeCQueue *cq)
     c = kvm_irqchip_begin_route_changes(kvm_state);
     virq = kvm_irqchip_add_msi_route(&c, vector_n, &n->parent_obj);
     if (virq < 0) {
-        femu_err("Route MSIX vector to KVM failed");
+        error_report("Route MSIX vector to KVM failed");
         event_notifier_cleanup(&cq->guest_notifier);
         return -1;
     }
@@ -84,7 +84,7 @@ static int nvme_vector_unmask(PCIDevice *dev, unsigned vector, MSIMessage msg)
             e = &cq->guest_notifier;
             ret = kvm_irqchip_update_msi_route(kvm_state, cq->virq, msg, dev);
             if (ret < 0) {
-                femu_err("MSI irq update vector %u failed", vector);
+                error_report("MSI irq update vector %u failed", vector);
                 return ret;
             }
 
@@ -92,7 +92,7 @@ static int nvme_vector_unmask(PCIDevice *dev, unsigned vector, MSIMessage msg)
             ret = kvm_irqchip_add_irqfd_notifier_gsi(kvm_state, e,
                                                      NULL, cq->virq);
             if (ret < 0) {
-                femu_err("MSI add irqfd gsi vector %u failed, ret %d",
+                error_report("MSI add irqfd gsi vector %u failed, ret %d",
                              vector, ret);
                 return ret;
             }
@@ -120,7 +120,7 @@ static void nvme_vector_mask(PCIDevice *dev, unsigned vector)
             e = &cq->guest_notifier;
             ret = kvm_irqchip_remove_irqfd_notifier_gsi(kvm_state, e, cq->virq);
             if (ret != 0) {
-                femu_err("remove_irqfd_notifier_gsi failed");
+                error_report("remove_irqfd_notifier_gsi failed");
             }
             return;
         }
@@ -199,13 +199,13 @@ int nvme_setup_virq(FemuCtrl *n, NvmeCQueue *cq)
     if (cq->irq_enabled) {
         ret = nvme_add_kvm_msi_virq(n, cq);
         if (ret < 0) {
-            femu_err("nvme: add kvm msix virq failed\n");
+            error_report("nvme: add kvm msix virq failed\n");
             return -1;
         }
 
         ret = nvme_set_guest_notifier(n, &cq->guest_notifier, cq->cqid);
         if (ret < 0) {
-            femu_err("nvme: set guest notifier failed\n");
+            error_report("nvme: set guest notifier failed\n");
             return -1;
         }
     }
@@ -214,7 +214,7 @@ int nvme_setup_virq(FemuCtrl *n, NvmeCQueue *cq)
         n->vector_poll_started = true;
         if (msix_set_vector_notifiers(&n->parent_obj, nvme_vector_unmask,
                                       nvme_vector_mask, nvme_vector_poll)) {
-            femu_err("nvme: msix_set_vector_notifiers failed\n");
+            error_report("nvme: msix_set_vector_notifiers failed\n");
             return -1;
         }
     }

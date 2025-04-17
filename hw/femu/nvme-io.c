@@ -80,13 +80,13 @@ static void nvme_process_sq_io(void *opaque, int index_poller)
             req->status = status;
             int rc = femu_ring_enqueue(n->to_ftl[index_poller], (void *)&req, 1);
             if (rc != 1) {
-                femu_err("enqueue failed, ret=%d\n", rc);
+                error_report("enqueue failed, ret=%d\n", rc);
             }
         } else if (status == NVME_SUCCESS) {
             /* Normal I/Os that don't need delay emulation */
             req->status = status;
         } else {
-            femu_err("Error IO processed! status : %x \n",status);
+            error_report("Error IO processed! status : %x \n",status);
         }
 
         processed++;
@@ -140,7 +140,7 @@ static void nvme_process_cq_cpl(void *arg, int index_poller)
         req = NULL;
         rc = femu_ring_dequeue(rp, (void *)&req, 1);
         if (rc != 1) {
-            femu_err("dequeue from to_poller request failed\n");
+            error_report("dequeue from to_poller request failed\n");
         }
         assert(req);
 
@@ -327,7 +327,7 @@ void nvme_create_poller(FemuCtrl *n)
     for (int i = 1; i <= n->num_poller; i++) {
         n->to_ftl[i] = femu_ring_create(FEMU_RING_TYPE_MP_SC, FEMU_MAX_INF_REQS);
         if (!n->to_ftl[i]) {
-            femu_err("failed to create ring (n->to_ftl) ...\n");
+            error_report("failed to create ring (n->to_ftl) ...\n");
             abort();
         }
         assert(rte_ring_empty(n->to_ftl[i]));
@@ -337,7 +337,7 @@ void nvme_create_poller(FemuCtrl *n)
     for (int i = 1; i <= n->num_poller; i++) {
         n->to_poller[i] = femu_ring_create(FEMU_RING_TYPE_MP_SC, FEMU_MAX_INF_REQS);
         if (!n->to_poller[i]) {
-            femu_err("failed to create ring (n->to_poller) ...\n");
+            error_report("failed to create ring (n->to_poller) ...\n");
             abort();
         }
         assert(rte_ring_empty(n->to_poller[i]));
@@ -348,7 +348,7 @@ void nvme_create_poller(FemuCtrl *n)
         n->pq[i] = pqueue_init(FEMU_MAX_INF_REQS, cmp_pri, get_pri, set_pri,
                                get_pos, set_pos);
         if (!n->pq[i]) {
-            femu_err("failed to create pqueue (n->pq) ...\n");
+            error_report("failed to create pqueue (n->pq) ...\n");
             abort();
         }
     }
@@ -563,7 +563,7 @@ static uint16_t nvme_io_cmd(FemuCtrl *n, NvmeCmd *cmd, NvmeRequest *req)
     uint32_t nsid = le32_to_cpu(cmd->nsid);
 
     if (nsid == 0 || nsid > n->num_namespaces) {
-        femu_err("%s, NVME_INVALID_NSID %" PRIu32 "\n", __func__, nsid);
+        error_report("%s, NVME_INVALID_NSID %" PRIu32 "\n", __func__, nsid);
         return NVME_INVALID_NSID | NVME_DNR;
     }
 
@@ -622,7 +622,7 @@ static uint16_t nvme_io_cmd(FemuCtrl *n, NvmeCmd *cmd, NvmeRequest *req)
             return n->ext_ops.io_cmd(n, ns, cmd, req);
         }
 
-        femu_err("%s, NVME_INVALID_OPCODE\n", __func__);
+        error_report("%s, NVME_INVALID_OPCODE\n", __func__);
         return NVME_INVALID_OPCODE | NVME_DNR;
     }
 }

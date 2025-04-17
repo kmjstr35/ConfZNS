@@ -771,7 +771,7 @@ static int do_gc(struct ssd *ssd, bool force)
 
     victim_line = select_victim_line(ssd, force);
     if (!victim_line) {
-        femu_err("FTL.c : 770 but GC doesn't happend to Inhoinno\n");
+        error_report("FTL.c : 770 but GC doesn't happend to Inhoinno\n");
         return -1;
     }
 
@@ -791,7 +791,7 @@ static int do_gc(struct ssd *ssd, bool force)
             mark_block_free(ssd, &ppa);
 
             if (spp->enable_gc_delay) {
-                femu_err("FTL.c : 790 GC happend to Inhoinno\n");
+                error_report("FTL.c : 790 GC happend to Inhoinno\n");
                 struct nand_cmd gce;
                 gce.type = GC_IO;
                 gce.cmd = NAND_ERASE;
@@ -873,7 +873,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
 
     while (should_gc_high(ssd)) {
         /* perform GC here until !should_gc(ssd) */
-        femu_err("In FTL.c :870 in ssd_write, GC triggered, to inhoinno");
+        error_report("In FTL.c :870 in ssd_write, GC triggered, to inhoinno");
         r = do_gc(ssd, true);
         if (r == -1)
             break;
@@ -941,7 +941,7 @@ static void *ftl_thread(void *arg)
             ssd->sp.enable_gc_delay=true;
             ftl_assert(req);
             if(!ssd->sp.enable_gc_delay)
-                femu_err("In FTL.c :937 ssd->sp.enable_gc_delay=false, to inhoinno");
+                error_report("In FTL.c :937 ssd->sp.enable_gc_delay=false, to inhoinno");
             switch (req->cmd.opcode) {
             case NVME_CMD_WRITE:
                 lat = ssd_write(ssd, req);
@@ -970,7 +970,7 @@ static void *ftl_thread(void *arg)
 
             /* clean one line if needed (in the background) */
             if (should_gc(ssd)) {
-                femu_err("In ftl.c:965 gc processed, to Inhoinno\n");
+                error_report("In ftl.c:965 gc processed, to Inhoinno\n");
                 do_gc(ssd, false);
             }
         }

@@ -477,7 +477,7 @@ static void nvme_init_pci(FemuCtrl *n)
 {
     uint8_t *pci_conf = n->parent_obj.config;
     #ifdef INHOINNO_VERBOSE_SETTING
-    femu_err("femu.c : nvme_init_pci(), to inhoinno \n");
+    error_report("femu.c : nvme_init_pci(), to inhoinno \n");
     #endif
 #if PCIe_TIME_SIMULATION
     n->pci_simulation =g_malloc0(sizeof(PCIe_Gen3_x4));
@@ -486,7 +486,7 @@ static void nvme_init_pci(FemuCtrl *n)
     n->pci_simulation->bw=Interface_PCIeGen3x4_bw;
     int ret =pthread_spin_init(&n->pci_lock, PTHREAD_PROCESS_SHARED);
     if(ret)
-        femu_err("femu.c:477 nvme_init_pci(): lock alloc failed, to inhoinno \n");
+        error_report("femu.c:477 nvme_init_pci(): lock alloc failed, to inhoinno \n");
 #endif
     pci_conf[PCI_INTERRUPT_PIN] = 1;
     /* Coperd: QEMU-OCSSD(0x1d1d,0x1f1f), QEMU-NVMe(0x8086,0x5845) */
@@ -513,7 +513,7 @@ static void nvme_init_pci(FemuCtrl *n)
 static int nvme_register_extensions(FemuCtrl *n)
 {
     #ifdef INHOINNO_VERBOSE_SETTING
-    femu_err("femu.c : nvme_register_extensions(), to inhoinno \n");
+    error_report("femu.c : nvme_register_extensions(), to inhoinno \n");
     #endif
     if (OCSSD(n)) {
         switch (n->lver) {
@@ -599,7 +599,7 @@ static void nvme_init_sched_queue(FemuCtrl *n )
             femu_log("NVMe Priority Queue [idx]:%u [Prio]:%u [#th order in same prio]:%u created",i,i/weight_per_pqueue, i%weight_per_pqueue);
         }else{
             g_free(sq);
-            femu_err("Inhoinno Err femu.c:557 nvme_init_sched_queue\n");
+            error_report("Inhoinno Err femu.c:557 nvme_init_sched_queue\n");
         }
     }
 
@@ -609,7 +609,7 @@ static void femu_realize(PCIDevice *pci_dev, Error **errp)
     FemuCtrl *n = FEMU(pci_dev);
     int64_t bs_size;
     #ifdef INHOINNO_VERBOSE_SETTING
-    femu_err("femu.c : femu_realize(), to inhoinno \n");
+    error_report("femu.c : femu_realize(), to inhoinno \n");
     #endif
     nvme_check_size();
 
@@ -752,7 +752,7 @@ static void femu_class_init(ObjectClass *oc, void *data)
     DeviceClass *dc = DEVICE_CLASS(oc);
     PCIDeviceClass *pc = PCI_DEVICE_CLASS(oc);
     #ifdef INHOINNO_VERBOSE_SETTING
-    femu_err("femu.c : femu_class_init(), to inhoinno \n");
+    error_report("femu.c : femu_class_init(), to inhoinno \n");
     #endif
     pc->realize = femu_realize;
     pc->exit = femu_exit;

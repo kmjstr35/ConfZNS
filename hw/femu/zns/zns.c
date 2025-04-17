@@ -45,7 +45,7 @@ static inline uint64_t zns_get_multichnlway_ppn_idx(NvmeNamespace *ns, uint64_t 
     uint64_t iter_chnl_val = spp->nchnls * spp->planes_per_die;
     uint64_t incre = (slpa % spp->chnls_per_zone) * spp->planes_per_die;
     uint64_t increp= slpa_origin % spp->planes_per_die;
-    //femu_err("[TEST] zns.c:99 zidx:%lu start:%lu iter_chnl_way %lu iter_chnl %lu\n", zidx, start, iter_chnl_way,iter_chnl);
+    //error_report("[TEST] zns.c:99 zidx:%lu start:%lu iter_chnl_way %lu iter_chnl %lu\n", zidx, start, iter_chnl_way,iter_chnl);
 
     return ((start + (iter_chnl_way*iter_chnl_way_val) + (iter_chnl*iter_chnl_val) + incre + increp));
 }
@@ -61,7 +61,7 @@ static inline uint64_t zns_get_ns0_zone_ppn_idx(NvmeNamespace *ns, uint64_t slba
     uint64_t zone_size = NVME_DEFAULT_ZONE_SIZE / ZNS_PAGE_SIZE;
     uint64_t now_avail_chnls = spp->chnls_per_another_zone;
     if(spp->chnls_per_another_zone > spp->nchnls){
-        femu_err("Wrong setting : spp->chnls_per_another_zone > spp->nchnls \n");
+        error_report("Wrong setting : spp->chnls_per_another_zone > spp->nchnls \n");
         return 0;
     }
 
@@ -91,7 +91,7 @@ static inline uint64_t zns_another_ns1_zone_ppn_idx(NvmeNamespace *ns, uint64_t 
     uint64_t zone_size = NVME_DEFAULT_ZONE_SIZE / ZNS_PAGE_SIZE;
     uint64_t now_avail_chnls = spp->nchnls - spp->chnls_per_another_zone;
     for(uint64_t i =0 ; i > 10; i++){
-        femu_err("zns_another_ns_elastic:zns.c:172 [ spp->nchnls < spp->chnls_per_another_zone ] \n");
+        error_report("zns_another_ns_elastic:zns.c:172 [ spp->nchnls < spp->chnls_per_another_zone ] \n");
     }
     uint64_t num_of_concurrent_zones = (now_avail_chnls / spp->chnls_per_zone) * (spp->ways / spp->ways_per_zone);
 
@@ -175,15 +175,15 @@ static int zns_init_zone_geometry(NvmeNamespace *ns, Error **errp)
     }
 
     if (zone_cap > zone_size) {
-        femu_err("zone capacity %luB > zone size %luB", zone_cap, zone_size);
+        error_report("zone capacity %luB > zone size %luB", zone_cap, zone_size);
         return -1;
     }
     if (zone_size < lbasz) {
-        femu_err("zone size %luB too small, must >= %uB", zone_size, lbasz);
+        error_report("zone size %luB too small, must >= %uB", zone_size, lbasz);
         return -1;
     }
     if (zone_cap < lbasz) {
-        femu_err("zone capacity %luB too small, must >= %uB", zone_cap, lbasz);
+        error_report("zone capacity %luB too small, must >= %uB", zone_cap, lbasz);
         return -1;
     }
 
@@ -192,23 +192,23 @@ static int zns_init_zone_geometry(NvmeNamespace *ns, Error **errp)
     n->num_zones = ns->size / lbasz / n->zone_size;
 
     if (n->max_open_zones > n->num_zones) {
-        femu_err("max_open_zones value %u exceeds the number of zones %u",
+        error_report("max_open_zones value %u exceeds the number of zones %u",
                  n->max_open_zones, n->num_zones);
         return -1;
     }
     if (n->max_active_zones > n->num_zones) {
-        femu_err("max_active_zones value %u exceeds the number of zones %u",
+        error_report("max_active_zones value %u exceeds the number of zones %u",
                  n->max_active_zones, n->num_zones);
         return -1;
     }
 
     if (n->zd_extension_size) {
         if (n->zd_extension_size & 0x3f) {
-            femu_err("zone descriptor extension size must be multiples of 64B");
+            error_report("zone descriptor extension size must be multiples of 64B");
             return -1;
         }
         if ((n->zd_extension_size >> 6) > 0xff) {
-            femu_err("zone descriptor extension size is too large");
+            error_report("zone descriptor extension size is too large");
             return -1;
         }
     }
@@ -254,7 +254,7 @@ static void zns_init_zoned_state(NvmeNamespace *ns)
     n->zone_size_log2 = 0;
     if (is_power_of_2(n->zone_size)) {
         n->zone_size_log2 = 63 - clz64(n->zone_size);   // 11= 63 - 52 
-        femu_err("zone_size_log2 : %u (64MB : 2^26, 512B = 2^9)\n",n->zone_size_log2);
+        error_report("zone_size_log2 : %u (64MB : 2^26, 512B = 2^9)\n",n->zone_size_log2);
     }
 }
 
@@ -288,7 +288,7 @@ static void  zns_init_zone_identify(FemuCtrl *n, NvmeNamespace *ns, int lba_inde
      * calculated NPDG.
      */
     if (n->zone_size % (ns->id_ns.npdg + 1)) {
-        femu_err("the zone size (%"PRIu64" blocks) is not a multiple of the"
+        error_report("the zone size (%"PRIu64" blocks) is not a multiple of the"
                  "calculated deallocation granularity (%"PRIu16" blocks); DULBE"
                  "support disabled", n->zone_size, ns->id_ns.npdg + 1);
         ns->id_ns.nsfeat &= ~0x4;
@@ -476,7 +476,7 @@ static uint16_t zns_check_zone_write(FemuCtrl *n, NvmeNamespace *ns,
                 status = NVME_INVALID_FIELD;
             }
             if((zidx == 0) || (zidx == 1) || (zidx == 2) || (zidx == 3)){
-                femu_err("[inho] zns.c:406 append wp error(%d) in zidx=%d",status, zidx);
+                error_report("[inho] zns.c:406 append wp error(%d) in zidx=%d",status, zidx);
             }
         } else if (unlikely(slba != zone->w_ptr)) {
             
@@ -533,7 +533,7 @@ static uint16_t zns_check_zone_read(NvmeNamespace *ns, uint64_t slba,
         ;
     } else if (unlikely(end > bndry)) {
         if (!n->cross_zone_read) {
-            femu_err("zns_check_zone_read BOUNDARY ERROR end %lu bndry %lu \n", end, bndry);
+            error_report("zns_check_zone_read BOUNDARY ERROR end %lu bndry %lu \n", end, bndry);
             status = NVME_ZONE_BOUNDARY_ERROR;
         } else {
             /*
@@ -997,7 +997,7 @@ static uint16_t zns_zone_mgmt_send(FemuCtrl *n, NvmeRequest *req)
         status = zns_do_zone_op(ns, zone, proc_mask, zns_reset_zone, req);
         req->expire_time += zns_advance_status(n, ns, cmd, req);
         (*resets)--;
-        femu_err("zone reset    action:%c   slba:%ld     zone_idx:%d    req->expire_time(%lu) - req->stime(%lu):%lu\n",action, req->slba ,zone_idx,req->expire_time,req->stime,(req->expire_time - req->stime));
+        error_report("zone reset    action:%c   slba:%ld     zone_idx:%d    req->expire_time(%lu) - req->stime(%lu):%lu\n",action, req->slba ,zone_idx,req->expire_time,req->stime,(req->expire_time - req->stime));
         return NVME_SUCCESS;
     case NVME_ZONE_ACTION_OFFLINE:
         if (all) {
@@ -1275,7 +1275,7 @@ static uint16_t zns_admin_cmd(FemuCtrl *n, NvmeCmd *cmd)
     switch (cmd->opcode) {
         
     default:
-        femu_err("zns_admin_cmd fallout cmd->opcode %x %d", cmd->opcode, cmd->opcode);
+        error_report("zns_admin_cmd fallout cmd->opcode %x %d", cmd->opcode, cmd->opcode);
         return NVME_INVALID_OPCODE | NVME_DNR;
     }
 }
@@ -1564,39 +1564,39 @@ static uint16_t zns_read(FemuCtrl *n, NvmeNamespace *ns, NvmeCmd *cmd,
 
     status = nvme_check_mdts(n, data_size);
     if (status) {
-        femu_err("nvme_check_mdts status %d %x\n",status,status);
+       error_report("nvme_check_mdts status %d %x\n",status,status);
         goto err;
     }
 
     status = zns_check_bounds(ns, slba, nlb);
     if (status) {
-        femu_err("zns_check_bounds status d:%d x:%x slba:%lu nlb:%u\n",status,status,slba,nlb);
+        error_report("zns_check_bounds status d:%d x:%x slba:%lu nlb:%u\n",status,status,slba,nlb);
         goto err;
     }
 
     status = zns_check_zone_read(ns, slba, nlb);
     
     if (status) {
-        femu_err("zns_check_zone_read status %d %x\n",status,status);
+        error_report("zns_check_zone_read status %d %x\n",status,status);
         goto err;
     }
 
     status = zns_map_dptr(n, data_size, req);
     
     if (status) {
-        femu_err("zns_map_dptr status %d %x\n",status,status);
+        error_report("zns_map_dptr status %d %x\n",status,status);
         goto err;
     }
 
     if (NVME_ERR_REC_DULBE(n->features.err_rec)) {
-        femu_err("n->features.err_rec %d %x\n",status,status);
+        error_report("n->features.err_rec %d %x\n",status,status);
         status = zns_check_dulbe(ns, slba, nlb);
         if (status) {
-            femu_err("zns_check_dulbe %d %x\n",status,status);
+            error_report("zns_check_dulbe %d %x\n",status,status);
             goto err;
         }
     }
-    femu_err("read success?? slba %lu\n",slba);
+    error_report("read success?? slba %lu\n",slba);
     data_offset = zns_l2b(ns, slba);
     req->expire_time += zns_advance_status(n,ns,cmd,req);
     /*PCI latency model here*/
@@ -1656,7 +1656,7 @@ static uint16_t zns_write(FemuCtrl *n, NvmeNamespace *ns, NvmeCmd *cmd,
 
     status = zns_check_bounds(ns, slba, nlb);
     if (status) {
-        femu_err("zns check bounds [pid %x] slba : %lx , nlb : %x\n", getpid(), slba, nlb);
+        error_report("zns check bounds [pid %x] slba : %lx , nlb : %x\n", getpid(), slba, nlb);
         goto err;
     }
 
@@ -1668,11 +1668,11 @@ static uint16_t zns_write(FemuCtrl *n, NvmeNamespace *ns, NvmeCmd *cmd,
     //unlock
     if (status) {
         err_zidx = zidx;
-        femu_err("in zns_check_zone_write [pid %x] Zidx : %lx z.wtp : %lx , slba : %lx , nlb : %x\n", getpid() ,zidx, zone->w_ptr, slba, nlb);
+        error_report("in zns_check_zone_write [pid %x] Zidx : %lx z.wtp : %lx , slba : %lx , nlb : %x\n", getpid() ,zidx, zone->w_ptr, slba, nlb);
         goto err;
     }
     if(err_zidx > (1<<MK_ZONE_CONVENTIONAL)){
-        femu_err("in errzidx:%lx [pid %x] Zidx : %lx z.wtp : %lx , slba : %lx, nlb : %x \n", err_zidx, getpid() ,zidx, zone->w_ptr, slba, nlb);
+        error_report("in errzidx:%lx [pid %x] Zidx : %lx z.wtp : %lx , slba : %lx, nlb : %x \n", err_zidx, getpid() ,zidx, zone->w_ptr, slba, nlb);
     }
     status = zns_auto_open_zone(ns, zone);
     if (status) {
@@ -1696,7 +1696,7 @@ static uint16_t zns_write(FemuCtrl *n, NvmeNamespace *ns, NvmeCmd *cmd,
     return NVME_SUCCESS;
 
 err:
-    femu_err("*********ZONE WRITE FAILED*********, Zidx : %lx , STATUS : %x\n", zidx, status);  
+    error_report("*********ZONE WRITE FAILED*********, Zidx : %lx , STATUS : %x\n", zidx, status);  
     return status | NVME_DNR;
 }
 static uint16_t zns_io_cmd(FemuCtrl *n, NvmeNamespace *ns, NvmeCmd *cmd,
@@ -1764,7 +1764,7 @@ static int zns_start_ctrl(FemuCtrl *n)
         n->zasl = n->mdts;
     } else {
         if (n->zasl_bs < n->page_size) {
-            femu_err("ZASL too small (%dB), must >= 1 page (4K)\n", n->zasl_bs);
+            error_report("ZASL too small (%dB), must >= 1 page (4K)\n", n->zasl_bs);
             return -1;
         }
         n->zasl = 31 - clz32(n->zasl_bs / n->page_size);
@@ -1835,7 +1835,7 @@ static void zns_init_ch(struct zns_ssd_channel *ch, struct zns_ssdparams *spp)
     ch->busy = 0;
     int ret = pthread_spin_init(&(ch->time_lock), PTHREAD_PROCESS_SHARED);
     if(ret)
-        femu_err("zns.c:1754 znssd_init(): lock alloc failed, to inhoinno \n");        
+        error_report("zns.c:1754 znssd_init(): lock alloc failed, to inhoinno \n");        
 }
 static void zns_init_chip(struct zns_ssd_lun *ch, struct zns_ssdparams *spp)
 {
@@ -1844,7 +1844,7 @@ static void zns_init_chip(struct zns_ssd_lun *ch, struct zns_ssdparams *spp)
     
     int ret = pthread_spin_init(&(ch->time_lock), PTHREAD_PROCESS_SHARED);
     if(ret)
-        femu_err("zns.c:1754 znssd_init(): lock alloc failed, to inhoinno \n");
+        error_report("zns.c:1754 znssd_init(): lock alloc failed, to inhoinno \n");
 }
 static void zns_init_plane(struct zns_ssd_plane *pl, struct zns_ssdparams *spp){
 
@@ -1859,7 +1859,7 @@ void znsssd_init(FemuCtrl * n){
     znsssd_init_params(n, spp);
     uint64_t nplanes = (spp->ways * spp->planes_per_die* spp->dies_per_chip * spp->nchnls);
     
-    femu_err("zns.c:1820 znssd_init(): nplanes %ld spp->ways %ld spp->planes_per_die %ld\
+    error_report("zns.c:1820 znssd_init(): nplanes %ld spp->ways %ld spp->planes_per_die %ld\
              spp->dies_per_chip %ld \
              spp->nchnls %ld \n ", nplanes, spp->ways, spp->planes_per_die, spp->dies_per_chip, spp->nchnls);
     /* initialize zns ssd internal layout architecture */
@@ -1872,7 +1872,7 @@ void znsssd_init(FemuCtrl * n){
         int ret = pthread_spin_init(&(zns->zone_array[i].w_ptr_lock), PTHREAD_PROCESS_SHARED);
         n->zone_array[i].cnt_reset=0;
         if(ret)
-            femu_err("zns.c:1687 znssd_init(): lock alloc failed, to inhoinno \n");
+            error_report("zns.c:1687 znssd_init(): lock alloc failed, to inhoinno \n");
     }
 
     for (int i = 0; i < spp->nchnls; i++) {
@@ -1886,7 +1886,7 @@ void znsssd_init(FemuCtrl * n){
     }
    
     for (uint64_t i =0; i < 1600; i+=16){
-        femu_err("[TEST] zns.c:1767 slba:%lu  ppa:%lu plane:%lu chidx:%lu chnnl:%lu \n",\
+        error_report("[TEST] zns.c:1767 slba:%lu  ppa:%lu plane:%lu chidx:%lu chnnl:%lu \n",\
         i, zns_get_multichnlway_ppn_idx(n->namespaces,i), 
         zns_advanced_plane_idx(n->namespaces, i), \
         zns_get_multiway_chip_idx(n->namespaces, i), \
@@ -1904,7 +1904,7 @@ static void zns_exit(FemuCtrl *n)
 int nvme_register_znssd(FemuCtrl *n)
 {
     #ifdef INHOINNO_VERBOSE_SETTING
-    femu_err("zns.c : nvme_register_znsssd(), to inhoinno \n");
+    error_report("zns.c : nvme_register_znsssd(), to inhoinno \n");
     #endif
     n->ext_ops = (FemuExtCtrlOps) {
         .state            = NULL,

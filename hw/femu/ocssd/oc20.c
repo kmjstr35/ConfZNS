@@ -638,13 +638,13 @@ static int oc20_resetfail_load(FemuCtrl *n, NvmeNamespace *ns, Error **errp)
 
     fp = fopen(params->resetfail_fname, "r");
     if (!fp) {
-        femu_err("Could not open resetfail file");
+        error_report("Could not open resetfail file");
         return 1;
     }
 
     while (fgets(line, sizeof(line), fp)) {
         if (set_resetfail_chunk(n, ns, line)) {
-            femu_err("Could not parse resetfail line: %s", line);
+            error_report("Could not parse resetfail line: %s", line);
             return 1;
         }
     }
@@ -665,13 +665,13 @@ static int oc20_writefail_load(FemuCtrl *n, NvmeNamespace *ns, Error **errp)
 
     fp = fopen(params->writefail_fname, "r");
     if (!fp) {
-        femu_err("Could not open writefail file");
+        error_report("Could not open writefail file");
         return 1;
     }
 
     while (fgets(line, sizeof(line), fp)) {
         if (set_writefail_sector(n, ns, line)) {
-            femu_err("Could not parse writefail line: %s", line);
+            error_report("Could not parse writefail line: %s", line);
             return 1;
         }
     }
@@ -737,7 +737,7 @@ static uint16_t oc20_rw(FemuCtrl *n, NvmeCmd *cmd, NvmeRequest *req, bool vector
     }
 
     if (nvme_map_prp(&req->qsg, &req->iov, prp1, prp2, nlb << lbads, n)) {
-        femu_err("%s,malformed prp\n", __func__);
+        error_report("%s,malformed prp\n", __func__);
         err = NVME_INVALID_FIELD | NVME_DNR;
         goto fail_free;
     }
@@ -1233,7 +1233,7 @@ static int oc20_init_namespace(FemuCtrl *n, NvmeNamespace *ns, Error **errp)
                  id_ctrl->lbaf.lun_len + id_ctrl->lbaf.grp_len);
 
     if (oc20_init_chunk_info(lns)) {
-        femu_err("Could not load chunk info");
+        error_report("Could not load chunk info");
         return 1;
     }
 
